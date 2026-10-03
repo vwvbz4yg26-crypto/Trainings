@@ -1,0 +1,224 @@
+ <!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Meine Trainings">
+  <meta name="theme-color" content="#f5f5f5">
+  <title>Meine Trainings</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                   "Segoe UI", sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      min-height: 100vh;
+    }
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+    h1 {
+      font-size: 32px;
+      margin: 0 0 4px;
+      letter-spacing: -0.5px;
+    }
+    .week {
+      color: #6e6e73;
+      margin-bottom: 24px;
+      font-size: 15px;
+    }
+    .progress-card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .progress-number {
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .progress-text {
+      color: #6e6e73;
+      font-size: 14px;
+    }
+    .bar {
+      height: 8px;
+      background: #e5e5ea;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #34c759;
+      border-radius: 20px;
+      transition: width 0.25s ease;
+    }
+    .training {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 17px 16px;
+      margin-bottom: 10px;
+      border: 0;
+      border-radius: 16px;
+      background: white;
+      color: #1c1c1e;
+      text-align: left;
+      font-size: 17px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .training:active {
+      transform: scale(0.99);
+    }
+    .check {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #c7c7cc;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+    }
+    .training.done .check {
+      background: #34c759;
+      border-color: #34c759;
+    }
+    .training.done .check::after {
+      content: "✓";
+    }
+    .training.done .name {
+      text-decoration: line-through;
+      color: #8e8e93;
+    }
+    .footer {
+      text-align: center;
+      color: #8e8e93;
+      font-size: 14px;
+      margin-top: 22px;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>Meine Trainings</h1>
+  <div class="week" id="week"></div>
+  <div class="progress-card">
+    <div class="progress-top">
+      <div class="progress-text">Fortschritt</div>
+      <div class="progress-number" id="progress">0 / 6</div>
+    </div>
+    <div class="bar">
+      <div class="bar-fill" id="bar"></div>
+    </div>
+  </div>
+  <div id="trainings"></div>
+  <div class="footer" id="message">
+    6 Trainings warten auf dich 💪
+  </div>
+</div>
+<script>
+  const trainings = [
+    "Laufen 5–10 km",
+    "Laufen 3–5 km",
+    "Schwimmen 2000 m (ABC)",
+    "Schwimmen 1500 m",
+    "Pier5 Trainingsplan",
+    "Pier5 Trainingsplan"
+  ];
+  function getMonday() {
+    const date = new Date();
+    const day = date.getDay();
+    const difference = day === 0 ? -6 : 1 - day;
+    date.setDate(date.getDate() + difference);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+  function getWeekKey() {
+    const monday = getMonday();
+    return [
+      monday.getFullYear(),
+      String(monday.getMonth() + 1).padStart(2, "0"),
+      String(monday.getDate()).padStart(2, "0")
+    ].join("-");
+  }
+  const weekKey = getWeekKey();
+  const storageKey = "meine-trainings-" + weekKey;
+  let completed = JSON.parse(
+    localStorage.getItem(storageKey) || "[false,false,false,false,false,false]"
+  );
+  function render() {
+    const container = document.getElementById("trainings");
+    container.innerHTML = "";
+    trainings.forEach((training, index) => {
+      const button = document.createElement("button");
+      button.className = "training" +
+        (completed[index] ? " done" : "");
+      button.type = "button";
+      button.innerHTML = `
+        <span class="check"></span>
+        <span class="name">${training}</span>
+      `;
+      button.addEventListener("click", () => {
+        completed[index] = !completed[index];
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify(completed)
+        );
+        render();
+      });
+      container.appendChild(button);
+    });
+    const done = completed.filter(Boolean).length;
+    document.getElementById("progress").textContent =
+      done + " / 6";
+    document.getElementById("bar").style.width =
+      (done / 6 * 100) + "%";
+    const remaining = 6 - done;
+    document.getElementById("message").textContent =
+      done === 6
+        ? "Alle 6 Trainings geschafft! 💪"
+        : remaining + " Training" +
+          (remaining === 1 ? "" : "s") +
+          " noch offen";
+  }
+  function showWeek() {
+    const monday = getMonday();
+    const formatted = monday.toLocaleDateString(
+      "de-DE",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }
+    );
+    document.getElementById("week").textContent =
+      "Woche ab Montag, " + formatted;
+  }
+  showWeek();
+  render();
+</script>
+</body>
+</html>
