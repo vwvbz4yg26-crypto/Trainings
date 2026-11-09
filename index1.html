@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Training">
+  <meta name="theme-color" content="#101b35">
+
+  <link rel="apple-touch-icon" href="training-icon.png">
+  <link rel="icon" type="image/png" href="training-icon.png">
+
+  <title>Meine Trainings</title>
+
+  <style>
+    :root {
+      --navy: #101b35;
+      --blue: #2477ff;
+      --pale: #eef4ff;
+      --muted: #667085;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px 16px 40px;
+      background: #f3f5f9;
+      color: #172033;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: linear-gradient(135deg, #101b35, #233e73);
+      color: white;
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: 25px;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      color: #dbe6ff;
+      font-size: 14px;
+    }
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 22px;
+      font-size: 14px;
+    }
+
+    .progress-track {
+      height: 8px;
+      background: #ffffff35;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: #74d6ff;
+      border-radius: 99px;
+      transition: width 0.2s;
+    }
+
+    .card,
+    .week-card {
+      background: white;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 5px 20px #1720330b;
+      margin-bottom: 14px;
+    }
+
+    .training,
+    .history-training {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 2px;
+      border-bottom: 1px solid #edf0f5;
+      cursor: pointer;
+    }
+
+    .training:last-child,
+    .history-training:last-of-type {
+      border-bottom: 0;
+    }
+
+    .training input,
+    .history-training input {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--blue);
+      flex-shrink: 0;
+    }
+
+    .training span {
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .training.done span,
+    .history-training.done span {
+      color: #7b8494;
+      text-decoration: line-through;
+    }
+
+    button {
+      border: 0;
+      border-radius: 13px;
+      padding: 13px 16px;
+      font: 600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--navy);
+      color: white;
+      width: 100%;
+    }
+
+    .back {
+      width: auto;
+      padding: 10px 12px;
+      background: var(--pale);
+      color: #16499a;
+    }
+
+    .week-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    #historyView {
+      display: none;
+    }
+
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .history-head h2 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .week-card {
+      border: 1px solid #e7ebf2;
+      box-shadow: none;
+    }
+
+    .week-title {
+      font-weight: 750;
+      font-size: 17px;
+    }
+
+    .week-count {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 3px 0 10px;
+    }
+
+    .history-training {
+      font-size: 14px;
+      padding: 10px 0;
+    }
+
+    .save-note {
+      font-size: 12px;
+      color: #16834a;
+      margin-top: 10px;
+      min-height: 16px;
+    }
+
+    footer {
+      text-align: center;
+      color: #8b93a2;
+      font-size: 12px;
+      padding: 8px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+
+    <section id="mainView">
+      <header>
+        <h1>Meine Trainings</h1>
+
+        <div class="subtitle" id="currentWeek">
+          Kalenderwoche
+        </div>
+
+        <div class="progress-row">
+          <span>Wochenfortschritt</span>
+          <strong id="progressText">0 von 6</strong>
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </header>
+
+      <section class="card" id="trainingList"></section>
+
+      <button class="primary" id="historyButton">
+        Wochenhistorie ansehen
+      </button>
+
+      <div class="week-label">
+        Die Liste beginnt automatisch jeden Montag neu.
+      </div>
+    </section>
+
+
+    <section id="historyView">
+
+      <div class="history-head">
+        <h2>Wochenhistorie</h2>
+
+        <button class="back" id="backButton">
+          ← Zurück
+        </button>
+      </div>
+
+      <div class="week-label">
+        Vergangene Wochen können hier nachträglich geändert werden.
+        Änderungen werden automatisch gespeichert.
+      </div>
+
+      <div id="historyList"></div>
+
+    </section>
+
+    <footer>
+      Deine Trainingsdaten werden auf diesem Gerät gespeichert.
+    </footer>
+
+  </main>
+
+
+  <script>
+
+    (() => {
+
+      const trainings = [
+        "Laufen 5–10 km",
+        "Laufen 3–5 km",
+        "Schwimmen 2000 m (ABC)",
+        "Schwimmen 1500 m",
+        "Pier5 Trainingsplan",
+        "Pier5 Trainingsplan"
+      ];
+
+      const STATE_KEY = "trainingTrackerStateV2";
+      const HISTORY_KEY = "trainingTrackerHistoryV2";
+
+
+      function isoWeekInfo(date = new Date()) {
+
+        const d = new Date(
+          Date.UTC(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+          )
+        );
+
+        const day = d.getUTCDay() || 7;
+
+        d.setUTCDate(d.getUTCDate() + 4 - day);
+
+        const year = d.getUTCFullYear();
+
+        const start = new Date(
+          Date.UTC(year, 0, 1)
+        );
+
+        const week = Math.ceil(
+          (((d - start) / 86400000) + 1) / 7
+        );
+
+        return {
+          key: `${year}-KW${String(week).padStart(2, "0")}`,
+          label: `KW ${week} / ${year}`
+        };
+      }
+
+
+      function readJSON(key, fallback) {
+
+        try {
+          const value = localStorage.getItem(key);
+
+          return value
+            ? JSON.parse(value)
+            : fallback;
+
+        } catch {
+          return fallback;
+        }
+      }
+
+
+      function normalize(list) {
+
+        return Array.from(
+          { length: trainings.length },
+          (_, i) => Boolean(list && list[i])
+        );
+      }
+
+
+      const current = isoWeekInfo();
+
+      let history = readJSON(HISTORY_KEY, {});
+
+      let state = readJSON(
+        STATE_KEY,
+        null
+      );
+
+
+      if (!state) {
+
+        state = {
+          weekKey: current.key,
+          checked: Array(
+            trainings.length
+          ).fill(false)
+        };
+
+      } else {
+
+        state.checked = normalize(
+          state.checked
+        );
+
+        if (
+          state.weekKey !== current.key
+        ) {
+
+          history[state.weekKey] = {
+            checked: state.checked.slice(),
+            savedAt: new Date().toISOString()
+          };
+
+          state = {
+            weekKey: current.key,
+            checked: Array(
+              trainings.length
+            ).fill(false)
+          };
+        }
+      }
+
+
+      function saveAll() {
+
+        history[state.weekKey] = {
+          checked: state.checked.slice(),
+          savedAt: new Date().toISOString()
+        };
+
+        localStorage.setItem(
+          STATE_KEY,
+          JSON.stringify(state)
+        );
+
+        localStorage.setItem(
+          HISTORY_KEY,
+          JSON.stringify(history)
+        );
+      }
+
+
+      function renderMain() {
+
+        document.getElementById(
+          "currentWeek"
+        ).textContent = current.label;
+
+
+        const list =
+          document.getElementById(
+            "trainingList"
+          );
+
+        list.innerHTML = "";
+
+
+        trainings.forEach(
+          (name, i) => {
+
+            const label =
+              document.createElement(
+                "label"
+              );
+
+            label.className =
+              "training" +
+              (
+                state.checked[i]
+                  ? " done"
+                  : ""
+              );
+
+
+            const input =
+              document.createElement(
+                "input"
+              );
+
+            input.type =
+              "checkbox";
+
+            input.checked =
+              state.checked[i];
+
+
+            input.addEventListener(
+              "change",
+              () => {
+
+                state.checked[i] =
+                  input.checked;
+
+                saveAll();
+
+                renderMain();
+
+              }
+            );
+
+
+            const text =
+              document.createElement(
+                "span"
+              );
+
+            text.textContent =
+              name;
+
+
+            label.append(
+              input,
+              text
+            );
+
+            list.append(
+              label
+            );
+          }
+        );
+
+
+        const done =
+          state.checked.filter(
+            Boolean
+          ).length;
+
+
+        document.getElementById(
+          "progressText"
+        ).textContent =
+          `${done} von ${trainings.length}`;
+
+
+        document.getElementById(
+          "progressFill"
+        ).style.width =
+          `${done / trainings.length * 100}%`;
+      }
+
+
+      function renderHistory() {
+
+        const container =
+          document.getElementById(
+            "historyList"
+          );
+
+        container.innerHTML = "";
+
+
+        const entries =
+          Object.entries(history)
+            .sort(
+              (a, b) =>
+                b[0].localeCompare(
+                  a[0]
+                )
+            );
+
+
+        if (!entries.length) {
+
+          container.innerHTML =
+            `<div class="card week-label">
+              Noch gibt es keine gespeicherten Wochen.
+            </div>`;
+
+          return;
+        }
+
+
+        entries.forEach(
+          ([key, data]) => {
+
+            data.checked =
+              normalize(
+                data.checked
+              );
+
+
+            const match =
+              key.match(
+                /^(\d{4})-KW(\d{2})$/
+              );
+
+
+            const title =
+              match
+                ? `KW ${Number(match[2])} / ${match[1]}`
+                : key;
+
+
+            const card =
+              document.createElement(
+                "article"
+              );
+
+            card.className =
+              "week-card";
+
+
+            const heading =
+              document.createElement(
+                "div"
+              );
+
+            heading.className =
+              "week-title";
+
+            heading.textContent =
+              title;
+
+
+            const summary =
+              document.createElement(
+                "div"
+              );
+
+            summary.className =
+              "week-count";
+
+
+            const updateSummary =
+              () => {
+
+                const count =
+                  data.checked.filter(
+                    Boolean
+                  ).length;
+
+                summary.textContent =
+                  `${count} von ${trainings.length} Trainings erledigt`;
+              };
+
+
+            updateSummary();
+
+            card.append(
+              heading,
+              summary
+            );
+
+
+            const note =
+              document.createElement(
+                "div"
+              );
+
+            note.className =
+              "save-note";
+
+
+            trainings.forEach(
+              (name, i) => {
+
+                const label =
+                  document.createElement(
+                    "label"
+                  );
+
+                label.className =
+                  "history-training" +
+                  (
+                    data.checked[i]
+                      ? " done"
+                      : ""
+                  );
+
+
+                const input =
+                  document.createElement(
+                    "input"
+                  );
+
+                input.type =
+                  "checkbox";
+
+                input.checked =
+                  data.checked[i];
+
+
+                const text =
+                  document.createElement(
+                    "span"
+                  );
+
+                text.textContent =
+                  name;
+
+
+                input.addEventListener(
+                  "change",
+                  () => {
+
+                    data.checked[i] =
+                      input.checked;
+
+                    data.savedAt =
+                      new Date()
+                        .toISOString();
+
+
+                    history[key] =
+                      data;
+
+
+                    localStorage.setItem(
+                      HISTORY_KEY,
+                      JSON.stringify(
+                        history
+                      )
+                    );
+
+
+                    label.classList.toggle(
+                      "done",
+                      input.checked
+                    );
+
+
+                    updateSummary();
+
+                    note.textContent =
+                      "✓ Änderung gespeichert";
+                  }
+                );
+
+
+                label.append(
+                  input,
+                  text
+                );
+
+                card.append(
+                  label
+                );
+              }
+            );
+
+
+            card.append(
+              note
+            );
+
+            container.append(
+              card
+            );
+          }
+        );
+      }
+
+
+      document
+        .getElementById(
+          "historyButton"
+        )
+        .addEventListener(
+          "click",
+          () => {
+
+            renderHistory();
+
+            document.getElementById(
+              "mainView"
+            ).style.display =
+              "none";
+
+            document.getElementById(
+              "historyView"
+            ).style.display =
+              "block";
+
+            window.scrollTo(
+              0,
+              0
+            );
+          }
+        );
+
+
+      document
+        .getElementById(
+          "backButton"
+        )
+        .addEventListener(
+          "click",
+          () => {
+
+            document.getElementById(
+              "historyView"
+            ).style.display =
+              "none";
+
+            document.getElementById(
+              "mainView"
+            ).style.display =
+              "block";
+
+            window.scrollTo(
+              0,
+              0
+            );
+          }
+        );
+
+
+      saveAll();
+
+      renderMain();
+
+    })();
+
+  </script>
+
+</body>
+</html>
